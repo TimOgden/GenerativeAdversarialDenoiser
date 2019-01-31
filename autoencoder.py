@@ -15,8 +15,7 @@ import os
 
 def build_model(middle_nodes = 3):
     model = keras.models.Sequential([
-        Dense(784, activation='relu', input_shape=(28,28)),
-        Flatten(),
+        Dense(784, activation='relu', input_shape=(784,)),
         Dense(128, activation='relu'),
         Dense(64, activation='relu'),
         Dense(middle_nodes, activation='relu'),
@@ -63,7 +62,9 @@ def addNoise(images, multiplier=2):
     return new_images
 
 
-
+def preprocess(x):
+    x = x.astype('float32') / 255.
+    return x.reshape(-1, np.prod(x.shape[1:])) # flatten
 
 
 
@@ -100,10 +101,10 @@ else:
     np.save('x_train.npy', x_train)
     np.save('x_test.npy', x_test)
 
-x_train = np.reshape(x_train, (-1, 28, 28, 1))
-x_test = np.reshape(x_test, (-1, 28, 28, 1))
-noisy_x_train = np.reshape(noisy_x_train, (-1, 28, 28, 1))
-noisy_x_test = np.reshape(noisy_x_test, (-1, 28, 28, 1))
+x_train = preprocess(x_train)
+x_test = preprocess(x_test)
+noisy_x_train = preprocess(noisy_x_train)
+noisy_x_test = preprocess(noisy_x_test)
 model.fit(x=noisy_x_train, y=x_train, batch_size=500, epochs=10, verbose=2, validation_data=(noisy_x_test, x_test))
-
+model.save('model.h5')
 
