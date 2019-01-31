@@ -15,9 +15,8 @@ import numpy as np
 
 def build_model(middle_nodes = 3):
     model = keras.models.Sequential([
-        Input(shape=(28,28)),
+        Dense(784, activation='relu', input_shape=(28,28)),
         Flatten(),
-        Dense(784, activation='relu', input_shape=(784,)),
         Dense(128, activation='relu'),
         Dense(64, activation='relu'),
         Dense(middle_nodes, activation='relu'),
@@ -81,6 +80,14 @@ print('regular data aquired')
 print('noisy data aquired')
 print('noisy data len:', len(noisy_x_train))
 print('reg data len:', len(x_train))
+noisy_x_train = np.array(noisy_x_train)
+noisy_x_test = np.array(noisy_x_test)
+x_train = np.array(x_train)
+x_test = np.array(x_test)
+np.save('noisy_x_train.npy', noisy_x_train)
+np.save('noisy_x_test.npy', noisy_x_test)
+np.save('x_train.npy', x_train)
+np.save('x_test.npy', x_test)
 model.fit(x=noisy_x_train, y=x_train, batch_size=500, epochs=10, verbose=2, validation_data=(noisy_x_test, x_test))
 
 
