@@ -38,17 +38,22 @@ class AutoEncoder:
         return model
         
 
-    def getNoisyData(self):
+    def getNoisyData(self, override=False):
+        x_train = self.x_train
+        x_test = self.x_test
         if os.path.exists('noisy_x_train.npy') and os.path.exists('noisy_x_test.npy') and os.path.exists('x_train.npy') and os.path.exists('x_test.npy'):
             self.noisy_x_train = np.load('noisy_x_train.npy')
             self.noisy_x_test = np.load('noisy_x_test.npy')
         else:
-            self.noisy_x_train = addNoise(self.x_train)
-            self.noisy_x_test = addNoise(self.x_test)
+            self.noisy_x_train = self.addNoise(x_train)
+            self.noisy_x_test = self.addNoise(x_test)
+        if override:
+            self.noisy_x_train = self.addNoise(x_train)
+            self.noisy_x_test = self.addNoise(x_test)
         
 
 
-    def addNoise(images, multiplier=2):
+    def addNoise(self, images, multiplier=2):
         new_images = []
         i = 0
         for image in images:
@@ -74,7 +79,7 @@ class AutoEncoder:
 
     # In[ ]:
 
-    def constructAndTrain(self):
+    def constructAndTrain(self, savefile, epochs=10):
         self.model = self.build_model()
         print('model built')
 
@@ -92,8 +97,8 @@ class AutoEncoder:
         self.x_test = self.preprocess(self.x_test)
         self.noisy_x_train = self.preprocess(self.noisy_x_train)
         self.noisy_x_test = self.preprocess(self.noisy_x_test)
-        self.model.fit(x=self.noisy_x_train, y=self.x_train, batch_size=500, epochs=10, verbose=1, validation_data=(self.noisy_x_test, self.x_test))
-        self.model.save('model.h5')
+        self.model.fit(x=self.noisy_x_train, y=self.x_train, batch_size=500, epochs=epochs, verbose=1, validation_data=(self.noisy_x_test, self.x_test))
+        self.model.save(savefile)
 
     def constructAndLoad(self, filename):
         self.model = self.build_model()
@@ -102,15 +107,16 @@ class AutoEncoder:
         self.x_test = np.load('x_test.npy')
         self.noisy_x_train = np.load('noisy_x_train.npy')
         self.noisy_x_test = np.load('noisy_x_test.npy')
-        print('model built')
+        print('model built and loaded')
 
     def retrieveTestData(self):
         return (self.x_test, self.noisy_x_test)
 
 
     def __init__(self, encoder_size=28):
-        (x_train, _), (x_test, _) = mnist.load_data()
+        (x_train, _), (x_test, y_test) = mnist.load_data()
         self.x_train = x_train
         self.x_test = x_test
+        self.y_test = y_test
         self.encoder_size = encoder_size
         self.getNoisyData()
