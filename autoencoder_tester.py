@@ -24,13 +24,13 @@ def step(image):
 
 #model = build_model()
 #model = load_model('model.h5')
-encoder_size = 32
+encoder_size = 75
 ae = autoencoder.AutoEncoder(encoder_size=encoder_size)
 
 
 
-filename = str(encoder_size) + '-encoder'
-epochs = 10
+filename = str(encoder_size) + '-advancedencoder'
+epochs = 30
 full_filename = filename + '-' + str(epochs) + '.h5'
 if os.path.exists(full_filename):
 	ae.constructAndLoad(full_filename)

@@ -28,9 +28,11 @@ class AutoEncoder:
         model = keras.models.Sequential([
             Dense(784, activation='relu', input_shape=(784,)),
             Dense(128, activation='relu'),
+            Dense(100, activation='relu'),
             Dense(64, activation='relu'),
             Dense(self.encoder_size, activation='relu'),
             Dense(64, activation='relu'),
+            Dense(100, activation='relu'),
             Dense(128, activation='relu'),
             Dense(784, activation='sigmoid')
         ])
