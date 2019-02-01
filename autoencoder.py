@@ -5,106 +5,112 @@
 
 
 import keras
-from keras.layers import Dense, Flatten, Input
+from keras.layers import Dense, Activation
+from keras.utils.generic_utils import get_custom_objects
 from keras.datasets import mnist
+from keras.models import load_model
 import numpy as np
 import os
 
 # In[ ]:
 
-
-def build_model(middle_nodes = 3):
-    model = keras.models.Sequential([
-        Dense(784, activation='relu', input_shape=(784,)),
-        Dense(128, activation='relu'),
-        Dense(64, activation='relu'),
-        Dense(middle_nodes, activation='relu'),
-        Dense(64, activation='relu'),
-        Dense(128, activation='relu'),
-        Dense(784, activation='sigmoid')
-    ])
-    model.compile(optimizer='Adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return model
+class AutoEncoder:
     
 
-def import_data():
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    def step_function(x):
+        if x<.5:
+            return 0
+        else:
+            return 1
 
-def getNoisyData(x_train, x_test):
-    noisy_x_train = addNoise(x_train)
-    noisy_x_test = addNoise(x_test)
-    #noisy_x_train = [np.reshape(val,(784,)) for val in noisy_x_train]
-    #noisy_x_test = [np.reshape(val,(784,)) for val in noisy_x_test]
-    return (noisy_x_train, noisy_x_test)
-    
-def getRegularData():
-    #x_train = [np.reshape(val,(784,)) for val in x_train]
-    #x_test = [np.reshape(val,(784,)) for val in x_test]
-    (x_train, _), (x_test, _) = mnist.load_data()
-    return (x_train[:int(.5*len(x_train))], x_test)
-
-
-def addNoise(images, multiplier=2):
-    new_images = []
-    i = 0
-    for image in images:
-        new_image = np.array(image)
-        noise = np.random.normal(0,multiplier,784)
+    def build_model(self):
+        #get_custom_objects().update({'step': Activation()})
+        model = keras.models.Sequential([
+            Dense(784, activation='relu', input_shape=(784,)),
+            Dense(128, activation='relu'),
+            Dense(64, activation='relu'),
+            Dense(self.encoder_size, activation='relu'),
+            Dense(64, activation='relu'),
+            Dense(128, activation='relu'),
+            Dense(784, activation='sigmoid')
+        ])
+        model.compile(optimizer='Adam', loss='binary_crossentropy', metrics=['accuracy'])
+        return model
         
-        noise = np.reshape(noise, (28,28))
-        for r in range(28):
-            for c in range(28):
-                new_image[r][c] += noise[r][c]
-        new_images.append(new_image)
-        i+=1
-        if i % 2000 == 0:
-            print(i,'/',len(images))
-    return new_images
+
+    def getNoisyData(self):
+        if os.path.exists('noisy_x_train.npy') and os.path.exists('noisy_x_test.npy') and os.path.exists('x_train.npy') and os.path.exists('x_test.npy'):
+            self.noisy_x_train = np.load('noisy_x_train.npy')
+            self.noisy_x_test = np.load('noisy_x_test.npy')
+        else:
+            self.noisy_x_train = addNoise(self.x_train)
+            self.noisy_x_test = addNoise(self.x_test)
+        
 
 
-def preprocess(x):
-    x = x.astype('float32') / 255.
-    return x.reshape(-1, np.prod(x.shape[1:])) # flatten
+    def addNoise(images, multiplier=2):
+        new_images = []
+        i = 0
+        for image in images:
+            new_image = np.array(image)
+            noise = np.random.normal(0,multiplier,784)
+            
+            noise = np.reshape(noise, (28,28))
+            for r in range(28):
+                for c in range(28):
+                    new_image[r][c] += noise[r][c]
+            new_images.append(new_image)
+            i+=1
+            if i % 2000 == 0:
+                print(i,'/',len(images))
+        return new_images
+
+
+    def preprocess(self, x):
+        x = x.astype('float32') / 255.
+        return x.reshape(-1, np.prod(x.shape[1:])) # flatten
 
 
 
-# In[ ]:
+    # In[ ]:
+
+    def constructAndTrain(self):
+        self.model = self.build_model()
+        print('model built')
 
 
-model = build_model(middle_nodes=28)
-print('model built')
+        self.noisy_x_train = np.array(self.noisy_x_train)
+        self.noisy_x_test = np.array(self.noisy_x_test)
+        self.x_train = np.array(self.x_train)
+        self.x_test = np.array(self.x_test)
+        np.save('noisy_x_train.npy', self.noisy_x_train)
+        np.save('noisy_x_test.npy', self.noisy_x_test)
+        np.save('x_train.npy', self.x_train)
+        np.save('x_test.npy', self.x_test)
 
-x_train = None
-x_test = None
-noisy_x_train = None
-noisy_x_test = None
-if os.path.exists('noisy_x_train.npy') and os.path.exists('noisy_x_test.npy') and os.path.exists('x_train.npy') and os.path.exists('x_test.npy'):
-    x_train = np.load('x_train.npy')
-    x_test = np.load('x_test.npy')
-    noisy_x_train = np.load('noisy_x_train.npy')
-    noisy_x_test = np.load('noisy_x_test.npy')
-else:
-    (x_train, x_test) = getRegularData()
-    print('did it just become 0?', len(x_train))
-    print('regular data aquired')
+        self.x_train = self.preprocess(self.x_train)
+        self.x_test = self.preprocess(self.x_test)
+        self.noisy_x_train = self.preprocess(self.noisy_x_train)
+        self.noisy_x_test = self.preprocess(self.noisy_x_test)
+        self.model.fit(x=self.noisy_x_train, y=self.x_train, batch_size=500, epochs=10, verbose=1, validation_data=(self.noisy_x_test, self.x_test))
+        self.model.save('model.h5')
 
-    (noisy_x_train, noisy_x_test) = getNoisyData(x_train, x_test)
-    print('noisy data aquired')
-    print('noisy data len:', len(noisy_x_train))
-    print('reg data len:', len(x_train))
-    noisy_x_train = np.array(noisy_x_train)
-    noisy_x_test = np.array(noisy_x_test)
-    x_train = np.array(x_train)
-    x_test = np.array(x_test)
-    np.save('noisy_x_train.npy', noisy_x_train)
-    np.save('noisy_x_test.npy', noisy_x_test)
-    np.save('x_train.npy', x_train)
-    np.save('x_test.npy', x_test)
+    def constructAndLoad(self, filename):
+        self.model = self.build_model()
+        self.model = load_model(filename)
+        self.x_train = np.load('x_train.npy')
+        self.x_test = np.load('x_test.npy')
+        self.noisy_x_train = np.load('noisy_x_train.npy')
+        self.noisy_x_test = np.load('noisy_x_test.npy')
+        print('model built')
 
-x_train = preprocess(x_train)
-x_test = preprocess(x_test)
-noisy_x_train = preprocess(noisy_x_train)
-noisy_x_test = preprocess(noisy_x_test)
-model.fit(x=noisy_x_train, y=x_train, batch_size=500, epochs=10, verbose=2, validation_data=(noisy_x_test, x_test))
-model.save('model.h5')
+    def retrieveTestData(self):
+        return (self.x_test, self.noisy_x_test)
 
+
+    def __init__(self, encoder_size=28):
+        (x_train, _), (x_test, _) = mnist.load_data()
+        self.x_train = x_train
+        self.x_test = x_test
+        self.encoder_size = encoder_size
+        self.getNoisyData()
