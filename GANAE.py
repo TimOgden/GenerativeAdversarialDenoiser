@@ -55,7 +55,7 @@ class GANAE:
 			Dense(64, activation='relu'),
 			Dense(32, activation='relu'),
 			Dense(8, activation='relu'),
-			Dense(1, activation='sigmoid')
+			Dense(1, activation='sigmoid', output_dim=1)
 		])
 		return discriminator
 	
