@@ -30,9 +30,10 @@ ae = autoencoder.AutoEncoder(encoder_size=encoder_size)
 
 
 filename = str(encoder_size) + '-advancedencoder'
-epochs = 30
+epochs = 10
 full_filename = filename + '-' + str(epochs) + '.h5'
-if os.path.exists(full_filename):
+override = False
+if os.path.exists(full_filename) and not override:
 	ae.constructAndLoad(full_filename)
 else:
 	ae.constructAndTrain(full_filename, epochs=epochs)

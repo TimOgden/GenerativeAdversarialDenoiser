@@ -5,7 +5,7 @@
 
 
 import keras
-from keras.layers import Dense, Activation
+from keras.layers import Dense, Activation, Flatten
 from keras.utils.generic_utils import get_custom_objects
 from keras.datasets import mnist
 from keras.models import load_model
