@@ -43,7 +43,6 @@ class DCGAN(object):
         self.AM = None  # adversarial model
         self.DM = None  # discriminator model
 
-    # (W−F+2P)/S+1
     def discriminator(self):
         if self.D:
             return self.D
