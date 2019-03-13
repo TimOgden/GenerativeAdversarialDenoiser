@@ -55,22 +55,21 @@ class GANAE:
 			Dense(64, activation='relu'),
 			Dense(32, activation='relu'),
 			Dense(8, activation='relu'),
-			Dense(1, activation='sigmoid', output_dim=1)
+			Dense(1, activation='sigmoid')
 		])
 		return discriminator
 	
 	def build_gan(self, trainable=True):
-		self.discriminator.trainable = trainable
-		ganInput = Input(shape=(784,))
-		x = self.generator(ganInput)
-		ganOutput = self.discriminator(x)
-		gan = keras.models.Model(inputs=ganInput, outputs=ganOutput)
-		print(gan.summary())
+		gan = keras.models.Sequential([
+			self.generator,
+			self.discriminator
+		])
+
 		return gan
 
 	def __init__(self, encoder_size=50):
 		self.encoder_size = encoder_size
-		self.optimizer = keras.optimizers.Adam(lr=.0002)
+		self.optimizer = keras.optimizers.Adam(lr=.0001)
 		self.generator = self.build_generator()
 		self.generator.compile(optimizer=self.optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 		self.discriminator = self.build_discriminator()
@@ -78,4 +77,5 @@ class GANAE:
 		self.gan = self.build_gan()
 		self.gan.compile(optimizer=self.optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 		
+
 		
