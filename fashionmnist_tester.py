@@ -27,13 +27,14 @@ def lerp(a,b,f):
 	return a + f * (b - a)
 
 def get_weights(img_index):
-	img = x_test[0]
+	img = x_test[img_index]
 	img = np.reshape(img,(1,28,28))
 	layer_output = get_med_layer_output([img])[0]
-	return np.array(layer_output[0])
+	#print(layer_output[0])
+	return layer_output[0]
 
-orig_weights = get_weights(0)
-end_weights = get_weights(10)
+orig_weights = get_weights(5)
+end_weights = get_weights(1)
 
 for index in range(1,11):
 	plt.subplot(1,11,index)
