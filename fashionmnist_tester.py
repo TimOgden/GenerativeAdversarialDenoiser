@@ -1,23 +1,39 @@
-from fashionmnist_autoencoder import build_decoder
+from fashionmnist_autoencoder import build_decoder, build_autoencoder
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-model = build_decoder()
-model.load_weights('fashion_autoencoder_best.h5', by_name=True)
+from keras.models import load_model
+from keras import backend as K
+from keras.datasets import fashion_mnist
 
-# Initial weights set as all midpoint of 0 and 1
-orig_weights = [15.668705, 0, 15.38014, 18.648127, 0, 0, 0, 0]
-end_weights = [7.966931, 0, 6.1681437, 8.659827, 0, 10.987252, 0, 0]
+(_,_), (x_test, _) = fashion_mnist.load_data()
+
+model = load_model('fashion_autoencoder_best.h5')
+
+decoder = build_decoder()
+decoder.load_weights('fashion_autoencoder_best.h5', by_name=True)
+
+
+get_med_layer_output = K.function([model.layers[0].input],
+										[model.layers[8].output])
 
 def get_img(weights):
 	weights = np.reshape(weights, (1,8))
-	img = model.predict(weights)
+	img = decoder.predict(weights)
 	img = np.reshape(img, (28,28))
 	return img
 
 def lerp(a,b,f):
 	return a + f * (b - a)
 
+def get_weights(img_index):
+	img = x_test[0]
+	img = np.reshape(img,(1,28,28))
+	layer_output = get_med_layer_output([img])[0]
+	return np.array(layer_output[0])
+
+orig_weights = get_weights(0)
+end_weights = get_weights(10)
 
 for index in range(1,11):
 	plt.subplot(1,11,index)
